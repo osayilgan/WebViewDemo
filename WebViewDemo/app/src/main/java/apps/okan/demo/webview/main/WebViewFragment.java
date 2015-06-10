@@ -287,7 +287,7 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
         /* Show LoadingBar */
         toggleLoadingBar(true);
 
-        /* Hide Print Button */
+        /* Disable and Hide Print Button */
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -347,6 +347,9 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
 
                                 /* Hide Loading Bar */
                                 toggleLoadingBar(false);
+
+                                /* Enable and Show Print Button */
+                                togglePrintButton(true);
                             }
                         });
                     }
