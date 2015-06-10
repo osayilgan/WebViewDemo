@@ -1,0 +1,48 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <WebView
+        android:id="@+id/mWebView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </WebView>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:background="@android:color/transparent"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:max="100"
+        android:progress="20"
+        android:visibility="gone"
+        android:layout_alignParentTop="true"
+        android:progressDrawable="@drawable/progress_bar_drawable"/>
+
+    <RelativeLayout
+        android:id="@+id/printButtonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true">
+
+        <apps.okan.demo.webview.view.MaterialCircleButton
+            android:id="@+id/printButton"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            app:material_circle_button_color="@color/breezy_blue"
+            app:material_circle_button_icon="@drawable/ic_printer" />
+
+    </RelativeLayout>
+
+    <apps.okan.demo.webview.view.DarkBackgroundProgressBar
+        android:id="@+id/loadingBar"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</RelativeLayout>

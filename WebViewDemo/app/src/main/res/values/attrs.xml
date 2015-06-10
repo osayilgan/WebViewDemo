@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Material Circle Button Attributes -->
+    <declare-styleable name="MaterialCircleButton">
+        <attr name="material_circle_button_icon" format="reference"/>
+        <attr name="material_circle_button_color" format="color"/>
+        <attr name="material_circle_button_radius" format="float"/>
+        <attr name="material_circle_button_offset_x" format="float"/>
+        <attr name="material_circle_button_offset_y" format="float"/>
+        <attr name="material_circle_button_shadow_color" format="color"/>
+    </declare-styleable>
+
+    <!-- Material Progress Bar -->
+    <declare-styleable name="MaterialProgressBar">
+        <attr name="material_progress_bar_color" format="reference"/>
+    </declare-styleable>
+
+</resources>
