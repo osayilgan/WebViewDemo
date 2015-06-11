@@ -82,6 +82,8 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
         /* Setting a Click Listener will change the Clickable Flag of the View to true */
         printButton.setOnClickListener(this);
 
+        setUpWebView();
+
         return parentView;
     }
 
