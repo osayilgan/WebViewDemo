@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import apps.okan.demo.webview.util.FileUtils;
-import apps.okan.demo.webview.util.SystemUtils;
 import apps.okan.demo.webview.view.DarkBackgroundProgressBar;
 import apps.okan.demo.webview.view.MaterialCircleButton;
 import apps.okan.webviewdemo.R;
@@ -58,13 +57,9 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
         /* Load URL */
         mWebView.loadUrl("http://breezy.com");
     }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-        /* TODO - Enable Slow Whole Document Draw */
-        if (SystemUtils.isLollipop()) WebView.enableSlowWholeDocumentDraw();
 
         View parentView = inflater.inflate(R.layout.web_view_fragment, null, false);
 
@@ -110,7 +105,7 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
         mWebView.getSettings().setBuiltInZoomControls(true);
         mWebView.getSettings().setSupportZoom(true);
         mWebView.getSettings().setLoadWithOverviewMode(true);
-        mWebView.getSettings().setUseWideViewPort(true);
+        mWebView.getSettings().setUseWideViewPort(false);
         mWebView.getSettings().setDisplayZoomControls(false);
     }
 

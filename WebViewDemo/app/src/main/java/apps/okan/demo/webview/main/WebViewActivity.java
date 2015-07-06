@@ -7,9 +7,7 @@ import android.app.FragmentTransaction;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.webkit.WebView;
 
-import apps.okan.demo.webview.util.SystemUtils;
 import apps.okan.webviewdemo.R;
 
 public class WebViewActivity extends AppCompatActivity {
@@ -24,10 +22,6 @@ public class WebViewActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        /* TODO - Enable Slow Whole Document Draw */
-        if (SystemUtils.isLollipop()) WebView.enableSlowWholeDocumentDraw();
-
         setContentView(R.layout.activity_web_view);
 
         /* init Fragment Manager */
