@@ -1,16 +1,14 @@
 package apps.okan.demo.webview.main;
 
-import android.annotation.TargetApi;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.ActionBarActivity;
 
 import apps.okan.webviewdemo.R;
 
-public class WebViewActivity extends AppCompatActivity {
+public class WebViewActivity extends ActionBarActivity {
 
     /* Fragment Manager */
     private FragmentManager fragmentManager;
@@ -18,7 +16,6 @@ public class WebViewActivity extends AppCompatActivity {
     /* ID for Fragment Contanier */
     private int containerId = R.id.fragment_container;
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
