@@ -57,7 +57,7 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
         /* Load URL */
         mWebView.loadUrl("http://breezy.com");
     }
-    
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 

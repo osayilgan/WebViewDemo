@@ -1,16 +1,14 @@
 package apps.okan.demo.webview.view;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 import android.view.View;
 
-import apps.okan.webviewdemo.R;
 import apps.okan.demo.webview.util.UIUtils;
+import apps.okan.webviewdemo.R;
 
 /**
  * Material Style Custom Progress Bar using CircularProgressDrawable for drawing and animating the Progress Bar.
@@ -38,7 +36,7 @@ public class MaterialProgressBar extends View {
 
         /* Check if the Drawable Color is Declared in XML */
         TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.MaterialProgressBar);
-        customColorAttribute = attributes.getColor(R.styleable.MaterialProgressBar_material_progress_bar_color, getPrimaryDarkColor(context));
+        customColorAttribute = attributes.getColor(R.styleable.MaterialProgressBar_material_progress_bar_color, getResources().getColor(android.R.color.black));
 
         mDrawable = new CircularProgressDrawable(customColorAttribute, UIUtils.dpToPx(5));
         mDrawable.setCallback(this);
@@ -61,19 +59,6 @@ public class MaterialProgressBar extends View {
         } else {
             if (mDrawable != null) mDrawable.stop();
         }
-    }
-
-    /**
-     * Retrieves the Primary Color Dart Attribute Color from Styles XML.
-     *
-     * @param context
-     * @return
-     */
-    private int getPrimaryDarkColor(Context context) {
-        TypedValue typedValue = new TypedValue();
-        Resources.Theme theme = context.getTheme();
-        theme.resolveAttribute(R.attr.colorPrimaryDark, typedValue, true);
-        return typedValue.data;
     }
 
     /**
