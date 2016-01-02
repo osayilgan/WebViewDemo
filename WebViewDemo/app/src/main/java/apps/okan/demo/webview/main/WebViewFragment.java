@@ -8,7 +8,10 @@ import android.graphics.pdf.PdfDocument;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
+import android.print.PageRange;
 import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
 import android.print.pdf.PrintedPdfDocument;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,11 +21,14 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
+
+import com.android.dx.stock.ProxyBuilder;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 
 import apps.okan.demo.webview.util.FileUtils;
 import apps.okan.demo.webview.view.DarkBackgroundProgressBar;
@@ -271,18 +277,7 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
     /**
      * Creates PDF File with Print Service Plugin.
      */
-    @TargetApi(Build.VERSION_CODES.KITKAT)
     private void createPdfFile() {
-
-        /* Do not proceed if the WebView is GONE */
-        if (mWebView.getVisibility() == View.GONE) return;
-
-        mWebView.measure(View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED),
-                View.MeasureSpec.makeMeasureSpec(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED));
-        mWebView.layout(0, 0, mWebView.getMeasuredWidth(), mWebView.getMeasuredHeight());
-
-        /* Show LoadingBar */
-        toggleLoadingBar(true);
 
         /* Disable and Hide Print Button */
         handler.postDelayed(new Runnable() {
@@ -292,66 +287,87 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
             }
         }, 500);
 
+        final PrintAttributes attrs = new PrintAttributes.Builder()
+                .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                .setResolution(new PrintAttributes.Resolution("1", "Foo", 300, 300))
+                .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                .build();
+
+        // Get a print adapter instance
+        final PrintDocumentAdapter adapter = mWebView.createPrintDocumentAdapter("Foo");
+
         /* Retrieve host name from Current Page's URL */
         final String fileName = "webPage.pdf";
 
-        final int webViewWidth = mWebView.getMeasuredWidth();
-        final int webViewHeight = mWebView.getMeasuredHeight();
+        try {
+
+            // TODO
+            PrintDocumentAdapter.LayoutResultCallback layoutResultCallback = getLayoutResultCallback(new MyInvocationHandler());
+
+            adapter.onLayout(attrs, attrs, null, layoutResultCallback, null);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         handler.postDelayed(new Runnable() {
+
             @Override
             public void run() {
 
-                /* Create PDF Document */
-                final PdfDocument document = createMultiPagePdfDocument(webViewWidth, webViewHeight);
+                try {
 
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
+                    File directory = FileUtils.getExternalBreezyDirectory();
+                    final File file = new File(directory, fileName);
+                    file.createNewFile();
 
-                        /* Write it To a OutPut Stream */
-                        File directory = FileUtils.getExternalBreezyDirectory();
+                    // TODO
+                    PrintDocumentAdapter.WriteResultCallback writeResultCallback = getWriteResultCallback(new MyInvocationHandler());
 
-                        /* Set the Website URL as the Screen Shot File */
-                        final File file = new File(directory, fileName);
+                    ParcelFileDescriptor pfd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE);
+                    adapter.onWrite(new PageRange[]{PageRange.ALL_PAGES}, pfd, null, writeResultCallback);
 
-                        try {
-
-                            document.writeTo(new FileOutputStream(file));
-                            document.close();
-
-                        } catch (final IOException e) {
-                            e.printStackTrace();
-
-                            handler.post(new Runnable() {
-
-                                @Override
-                                public void run() {
-
-                                    /* Push Error to user, Needs to be changed in production */
-                                    Toast.makeText(getActivity(), "Something went wrong when writing Website file to the Disk, Exception : " + e.toString(), Toast.LENGTH_LONG).show();
-
-                                    /* Hide Loading Bar */
-                                    toggleLoadingBar(false);
-                                }
-                            });
-                        }
-
-                        /* Dismiss Loading Indicator */
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-
-                                /* Hide Loading Bar */
-                                toggleLoadingBar(false);
-
-                                /* Enable and Show Print Button */
-                                togglePrintButton(true);
-                            }
-                        });
-                    }
-                }).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }, 1000);
+        }, 10000);
+    }
+
+    private PrintDocumentAdapter.LayoutResultCallback test2(PrintDocumentAdapter adapter) throws Exception {
+        Constructor<?> ctor = PrintDocumentAdapter.LayoutResultCallback.class.getDeclaredConstructors()[0];
+        ctor.setAccessible(true);
+        return (PrintDocumentAdapter.LayoutResultCallback) ctor.newInstance(adapter);
+    }
+
+    private PrintDocumentAdapter.WriteResultCallback test3(PrintDocumentAdapter adapter) throws Exception {
+        Constructor<?> ctor = PrintDocumentAdapter.WriteResultCallback.class.getDeclaredConstructors()[0];
+        ctor.setAccessible(true);
+        return (PrintDocumentAdapter.WriteResultCallback) ctor.newInstance(adapter);
+    }
+
+    private PrintDocumentAdapter.LayoutResultCallback getLayoutResultCallback(InvocationHandler invocationHandler) throws  IOException {
+        return ProxyBuilder.forClass(PrintDocumentAdapter.LayoutResultCallback.class)
+                .dexCache(FileUtils.getDexCacheDirectory(getActivity()))
+                .handler(invocationHandler)
+                .build();
+    }
+
+    private PrintDocumentAdapter.WriteResultCallback getWriteResultCallback(InvocationHandler invocationHandler) throws  IOException {
+        return ProxyBuilder.forClass(PrintDocumentAdapter.WriteResultCallback.class)
+                .dexCache(FileUtils.getDexCacheDirectory(getActivity()))
+                .handler(invocationHandler)
+                .build();
+    }
+
+    private class MyInvocationHandler implements InvocationHandler {
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            return null;
+        }
     }
 }
