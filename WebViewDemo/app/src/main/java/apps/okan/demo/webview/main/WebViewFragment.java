@@ -21,14 +21,16 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.android.dx.stock.ProxyBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import apps.okan.demo.webview.util.FileUtils;
 import apps.okan.demo.webview.view.DarkBackgroundProgressBar;
@@ -48,6 +50,8 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
     private DarkBackgroundProgressBar loadingBar;
 
     private Handler handler;
+
+    private String hostName;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -165,6 +169,9 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
 
                 /* Hide Progress Bar */
                 progressBar.setVisibility(View.GONE);
+
+                /* Set the URL of the WebPage */
+                hostName = getHostName();
             }
         }
     }
@@ -242,132 +249,96 @@ public class WebViewFragment extends Fragment implements View.OnClickListener {
     }
 
     /**
-     * Creates a PDF Multi Page Document depending on the Ratio of Letter Size.
-     * This method does not close the Document. It should be Closed after writing to a File.
-     *
-     * @return
-     */
-    @TargetApi(Build.VERSION_CODES.KITKAT)
-    private PdfDocument createMultiPagePdfDocument(int webViewWidth, int webViewHeight) {
-
-        /* Find the Letter Size Height depending on the Letter Size Ratio and given Page Width */
-        int letterSizeHeight = getLetterSizeHeight(webViewWidth);
-
-        PdfDocument document = new PrintedPdfDocument(getActivity(), getPrintAttributes());
-
-        final int numberOfPages = (webViewHeight/letterSizeHeight) + 1;
-
-        for (int i = 0; i < numberOfPages; i++) {
-
-            int webMarginTop = i*letterSizeHeight;
-
-            PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(webViewWidth, letterSizeHeight, i+1).create();
-            PdfDocument.Page page = document.startPage(pageInfo);
-
-            /* Scale Canvas */
-            page.getCanvas().translate(0, -webMarginTop);
-            mWebView.draw(page.getCanvas());
-
-            document.finishPage(page);
-        }
-
-        return document;
-    }
-
-    /**
      * Creates PDF File with Print Service Plugin.
      */
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void createPdfFile() {
 
+        /* Show Loading Bar */
+        toggleLoadingBar(true);
+
         /* Disable and Hide Print Button */
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                togglePrintButton(false);
-            }
-        }, 500);
-
-        final PrintAttributes attrs = new PrintAttributes.Builder()
-                .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
-                .setResolution(new PrintAttributes.Resolution("1", "Foo", 300, 300))
-                .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-                .build();
-
-        // Get a print adapter instance
-        final PrintDocumentAdapter adapter = mWebView.createPrintDocumentAdapter("Foo");
-
-        /* Retrieve host name from Current Page's URL */
-        final String fileName = "webPage.pdf";
+        handler.postDelayed(new Runnable() {@Override public void run() {togglePrintButton(false);}},500);
 
         try {
 
-            // TODO
-            PrintDocumentAdapter.LayoutResultCallback layoutResultCallback = getLayoutResultCallback(new MyInvocationHandler());
+            /* Create an Empty File to be written by Pdf Writer */
+            File emptyPdfFile = createEmptyFile();
 
-            adapter.onLayout(attrs, attrs, null, layoutResultCallback, null);
+            /* Get a print adapter instance */
+            PrintDocumentAdapter adapter = mWebView.createPrintDocumentAdapter("Foo");
+            PdfWriter pdfWriter = new PdfWriter(getActivity(), adapter, emptyPdfFile);
+
+            pdfWriter.write(new PdfWriter.PdfWriterCallback() {
+
+                @Override
+                public void onWriteFinished() {
+
+                    /* Hide Loading Bar */
+                    handler.postDelayed(new Runnable() {@Override public void run() {toggleLoadingBar(false);}},500);
+
+                    /* Notify User with Success Message */
+                    Toast.makeText(getActivity(), "Pdf Created Successfully", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onWriteFailed() {
+
+                    /* Hide Loading Bar */
+                    handler.postDelayed(new Runnable() {@Override public void run() {toggleLoadingBar(false);}},500);
+
+                    /* Notify User with Success Message */
+                    Toast.makeText(getActivity(), "Failed to Create Pdf File, Make sure the Application has necessary Permissions", Toast.LENGTH_SHORT).show();
+                }
+            });
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        handler.postDelayed(new Runnable() {
-
-            @Override
-            public void run() {
-
-                try {
-
-                    File directory = FileUtils.getExternalBreezyDirectory();
-                    final File file = new File(directory, fileName);
-                    file.createNewFile();
-
-                    // TODO
-                    PrintDocumentAdapter.WriteResultCallback writeResultCallback = getWriteResultCallback(new MyInvocationHandler());
-
-                    ParcelFileDescriptor pfd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE);
-                    adapter.onWrite(new PageRange[]{PageRange.ALL_PAGES}, pfd, null, writeResultCallback);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 10000);
     }
 
-    private PrintDocumentAdapter.LayoutResultCallback test2(PrintDocumentAdapter adapter) throws Exception {
-        Constructor<?> ctor = PrintDocumentAdapter.LayoutResultCallback.class.getDeclaredConstructors()[0];
-        ctor.setAccessible(true);
-        return (PrintDocumentAdapter.LayoutResultCallback) ctor.newInstance(adapter);
+    /**
+     * Creates an Empty Pdf File with HostName as file name.
+     *
+     * @return
+     * @throws IOException
+     */
+    private File createEmptyFile() throws IOException {
+
+        String fileName = hostName + ".pdf";
+
+        File directory = FileUtils.getExternalBreezyDirectory();
+        final File file = new File(directory, fileName);
+        file.createNewFile();
+        return file;
     }
 
-    private PrintDocumentAdapter.WriteResultCallback test3(PrintDocumentAdapter adapter) throws Exception {
-        Constructor<?> ctor = PrintDocumentAdapter.WriteResultCallback.class.getDeclaredConstructors()[0];
-        ctor.setAccessible(true);
-        return (PrintDocumentAdapter.WriteResultCallback) ctor.newInstance(adapter);
-    }
+    /**
+     * Retrieves the Host Name of the Current Visible Page in WebView.
+     *
+     * @return
+     */
+    private String getHostName() {
 
-    private PrintDocumentAdapter.LayoutResultCallback getLayoutResultCallback(InvocationHandler invocationHandler) throws  IOException {
-        return ProxyBuilder.forClass(PrintDocumentAdapter.LayoutResultCallback.class)
-                .dexCache(FileUtils.getDexCacheDirectory(getActivity()))
-                .handler(invocationHandler)
-                .build();
-    }
+        String hostName = "print_website";
 
-    private PrintDocumentAdapter.WriteResultCallback getWriteResultCallback(InvocationHandler invocationHandler) throws  IOException {
-        return ProxyBuilder.forClass(PrintDocumentAdapter.WriteResultCallback.class)
-                .dexCache(FileUtils.getDexCacheDirectory(getActivity()))
-                .handler(invocationHandler)
-                .build();
-    }
-
-    private class MyInvocationHandler implements InvocationHandler {
-
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            return null;
+        try {
+            hostName = getWebsiteURL();
+        } catch (MalformedURLException e) {
+            /* This Exception won't be thrown in any case, but it's safe to handle it (Give an initial Value to Host Name) */
+            e.printStackTrace();
         }
+
+        return hostName;
+    }
+
+    /**
+     * Retrieves the Host Name of the Current URL in web view.
+     *
+     * @return
+     * @throws MalformedURLException
+     */
+    private String getWebsiteURL() throws MalformedURLException{
+        return new URL(mWebView.getUrl()).getHost();
     }
 }
